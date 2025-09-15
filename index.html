@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <div>
+        <p>create bar</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td><input type="text" id="bar_label"></td>
+                    <td><button id="bar_register">register</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+    </div>
+
+    <div>
+        <p>create block</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Item Name</th>
+                    <th>Begin</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>
+                        <select id="block_bar"></select>
+                    </td>
+                    <td><input type="text" id="block_label"></td>
+                    <td><input type="text" id="block_begin"></td>
+                    <td><input type="text" id="block_end"></td>
+                    <td><button id="block_register">register</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <hr>
+    </div>
+
+
+    <div>
+        <div>
+            <h3>bars</h3>
+            <ul id="bar_list"></ul>
+        </div>
+
+        <hr>
+        <div>
+            <h3>blocks</h3>
+            <ul id="block_list"></ul>
+        </div>
+    </div>
+
+
+    <div>
+        <pre><code id="code"></code></pre>
+    </div>
+
+    <canvas id="canvas" width="600" height="400"></canvas>
+
+    <script src="./dayjs.min.js"></script>
+    <script src="./define.js"></script>
+
+</body>
+
+</html>
