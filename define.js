@@ -90,6 +90,7 @@ class Bar {
     constructor(label) {
         this.id = crypto.randomUUID();
         this.label = label;
+        blocks_by_bars[this.id] = [];
     }
 };
 
@@ -99,6 +100,7 @@ const block3 = new Block('2024-06-15', '2024-06-20', 'Block 3');
 
 const bar1 = new Bar('Bar 1');
 const bar2 = new Bar('Bar 2');
+const bar3 = new Bar('Bar 3');
 
 blocks.push(block1);
 blocks.push(block2);
@@ -106,9 +108,29 @@ blocks.push(block3);
 
 bars.push(bar1);
 bars.push(bar2);
+bars.push(bar3);
 
 blocks_by_bars[bar1.id] = [block1.id, block2.id];
 blocks_by_bars[bar2.id] = [block3.id];
+
+function add_block(begin, end, label) {
+    const block = new Block(begin, end, label);
+    blocks.push(block);
+    return block.id;
+}
+
+function add_bar(label) {
+    const bar = new Bar(label);
+    bars.push(bar);
+    return bar.id;
+}
+
+function assign_block_to_bar(block_id, bar_id) {
+    if (!(bar_id in blocks_by_bars)) {
+        blocks_by_bars[bar_id] = [];
+    }
+    blocks_by_bars[bar_id].push(block_id);
+}
 
 function join() {
     let metrics = { "max": -Infinity, "min": Infinity };
