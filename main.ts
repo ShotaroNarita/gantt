@@ -1,13 +1,59 @@
+// ===== 型定義 =====
+interface BlockData {
+    id: string;
+    begin: number;
+    end: number;
+    label: string;
+}
+
+interface NormalizedBlock extends BlockData {
+    normalized: {
+        begin: number;
+        end: number;
+        range: number;
+    };
+}
+
+interface BarData {
+    id: string;
+    label: string;
+    blocks: BlockData[];
+}
+
+interface ExportBarData extends BarData {
+    blocks: NormalizedBlock[];
+}
+
+interface Metrics {
+    max: number;
+    min: number;
+    range: number;
+}
+
+interface ExportData {
+    bars: ExportBarData[];
+    metrics: Metrics;
+}
+
+interface CanvasConfig {
+    MARGIN_LEFT: number;
+    MARGIN_RIGHT: number;
+    BAR_HEIGHT: number;
+    BAR_MARGIN: number;
+    GRID_LINES: number;
+}
+
+declare const dayjs: any;
 
 // ===== 設定とユーティリティ =====
 class Config {
-    static PALETTE = [
+    static readonly PALETTE: string[] = [
         '#F5E6D3', '#E6B422', '#F8C471', '#F39C12', '#FF6B9D', '#FFB6C1',
         '#98FB98', '#90EE90', '#87CEEB', '#B0E0E6', '#DDA0DD', '#E6E6FA',
         '#F0F8FF', '#FFF8DC', '#FFFACD', '#F5DEB3'
     ];
 
-    static CANVAS = {
+    static readonly CANVAS: CanvasConfig = {
         MARGIN_LEFT: 100,
         MARGIN_RIGHT: 50,
         BAR_HEIGHT: 50,
@@ -17,7 +63,7 @@ class Config {
 }
 
 class Utils {
-    static stringToHash(str) {
+    static stringToHash(str: string): number {
         const FNV_OFFSET_BASIS = 2166136261;
         const FNV_PRIME = 16777619;
         let hash = FNV_OFFSET_BASIS;
@@ -29,39 +75,49 @@ class Utils {
         return hash;
     }
 
-    static createSeededRandom(seed) {
+    static createSeededRandom(seed: number): () => number {
         let current = seed % 2147483647;
         if (current <= 0) current += 2147483646;
 
-        return function () {
+        return function (): number {
             current = current * 16807 % 2147483647;
             return (current - 1) / 2147483646;
         };
     }
 
-    static selectColorByText(text) {
+    static selectColorByText(text: string): string {
         const hash = this.stringToHash(text);
         const random = this.createSeededRandom(hash);
         const index = Math.floor(random() * Config.PALETTE.length);
         return Config.PALETTE[index];
     }
 
-    static validateDate(dateStr) {
+    static validateDate(dateStr: string): boolean {
         return dayjs(dateStr).isValid();
     }
 
-    static showError(message) {
+    static showError(message: string): void {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error';
         errorDiv.textContent = message;
-        document.body.insertBefore(errorDiv, document.querySelector('.container'));
+        const container = document.querySelector('.container');
+        if (container) {
+            document.body.insertBefore(errorDiv, container);
+        } else {
+            document.body.appendChild(errorDiv);
+        }
         setTimeout(() => errorDiv.remove(), 5000);
     }
 }
 
 // ===== データモデル =====
 class Block {
-    constructor(begin, end, label) {
+    public readonly id: string;
+    public readonly begin: number;
+    public readonly end: number;
+    public readonly label: string;
+
+    constructor(begin: string, end: string, label: string) {
         this.id = crypto.randomUUID();
 
         if (!Utils.validateDate(begin)) {
@@ -79,11 +135,11 @@ class Block {
         this.label = label;
     }
 
-    getDuration() {
+    getDuration(): number {
         return this.end - this.begin;
     }
 
-    toJSON() {
+    toJSON(): BlockData {
         return {
             id: this.id,
             begin: this.begin,
@@ -94,21 +150,28 @@ class Block {
 }
 
 class Bar {
-    constructor(label) {
+    public readonly id: string;
+    public readonly label: string;
+    public readonly blocks: Block[];
+
+    constructor(label: string) {
         this.id = crypto.randomUUID();
         this.label = label;
         this.blocks = [];
     }
 
-    addBlock(block) {
+    addBlock(block: Block): void {
         this.blocks.push(block);
     }
 
-    removeBlock(blockId) {
-        this.blocks = this.blocks.filter(block => block.id !== blockId);
+    removeBlock(blockId: string): void {
+        const index = this.blocks.findIndex(block => block.id === blockId);
+        if (index !== -1) {
+            this.blocks.splice(index, 1);
+        }
     }
 
-    toJSON() {
+    toJSON(): BarData {
         return {
             id: this.id,
             label: this.label,
@@ -119,17 +182,19 @@ class Bar {
 
 // ===== データ管理 =====
 class DataManager {
+    private bars: Bar[];
+
     constructor() {
         this.bars = [];
         this.reset();
     }
 
-    reset() {
+    reset(): void {
         this.bars = [];
         this.initializeDefaultData();
     }
 
-    initializeDefaultData() {
+    private initializeDefaultData(): void {
         // デフォルトデータの作成
         const bar1 = this.addBar('プロジェクト A');
         const bar2 = this.addBar('プロジェクト B');
@@ -144,25 +209,25 @@ class DataManager {
             this.assignBlockToBar(block2, bar1.id);
             this.assignBlockToBar(block3, bar2.id);
         } catch (error) {
-            Utils.showError(`初期データ作成エラー: ${error.message}`);
+            Utils.showError(`初期データ作成エラー: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
-    addBar(label) {
+    addBar(label: string): Bar {
         const bar = new Bar(label);
         this.bars.push(bar);
         return bar;
     }
 
-    findBar(barId) {
+    findBar(barId: string): Bar | undefined {
         return this.bars.find(bar => bar.id === barId);
     }
 
-    addBlock(begin, end, label) {
+    addBlock(begin: string, end: string, label: string): Block {
         return new Block(begin, end, label);
     }
 
-    assignBlockToBar(block, barId) {
+    assignBlockToBar(block: Block, barId: string): string {
         const bar = this.findBar(barId);
         if (!bar) {
             throw new Error(`バーが見つかりません: ${barId}`);
@@ -171,7 +236,7 @@ class DataManager {
         return block.id;
     }
 
-    getMetrics() {
+    getMetrics(): Metrics {
         let max = -Infinity;
         let min = Infinity;
 
@@ -189,7 +254,7 @@ class DataManager {
         };
     }
 
-    exportData() {
+    exportData(): ExportData {
         const metrics = this.getMetrics();
 
         return {
@@ -208,9 +273,9 @@ class DataManager {
         };
     }
 
-    importData(jsonData) {
+    importData(jsonData: string | ExportData): void {
         try {
-            const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+            const data: ExportData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
 
             this.bars = [];
 
@@ -229,37 +294,48 @@ class DataManager {
                 this.bars.push(bar);
             });
         } catch (error) {
-            throw new Error(`データインポートエラー: ${error.message}`);
+            throw new Error(`データインポートエラー: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+
+    get allBars(): readonly Bar[] {
+        return this.bars;
     }
 }
 
 // ===== レンダラー =====
 class GanttRenderer {
-    constructor(canvas) {
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Canvas context を取得できませんでした');
+        }
+        this.ctx = context;
     }
 
-    render(data) {
+    render(data: ExportData): void {
         this.clearCanvas();
         this.drawBackground();
         this.drawGrid(data.metrics);
         this.drawBars(data.bars, data.metrics);
     }
 
-    clearCanvas() {
+    private clearCanvas(): void {
         const { width, height } = this.canvas;
         this.ctx.clearRect(0, 0, width, height);
     }
 
-    drawBackground() {
+    private drawBackground(): void {
         const { width, height } = this.canvas;
         this.ctx.fillStyle = 'aliceblue';
         this.ctx.fillRect(0, 0, width, height);
     }
 
-    drawGrid(metrics) {
+    private drawGrid(metrics: Metrics): void {
         const { width, height } = this.canvas;
         const { MARGIN_LEFT, GRID_LINES } = Config.CANVAS;
 
@@ -283,7 +359,7 @@ class GanttRenderer {
         }
     }
 
-    drawBars(bars, metrics) {
+    private drawBars(bars: ExportBarData[], metrics: Metrics): void {
         const { width } = this.canvas;
         const { MARGIN_LEFT, MARGIN_RIGHT, BAR_HEIGHT, BAR_MARGIN } = Config.CANVAS;
 
@@ -302,7 +378,7 @@ class GanttRenderer {
         });
     }
 
-    drawBlock(block, y, availableWidth) {
+    private drawBlock(block: NormalizedBlock, y: number, availableWidth: number): void {
         const { MARGIN_LEFT, BAR_HEIGHT } = Config.CANVAS;
 
         const x = MARGIN_LEFT + block.normalized.begin * availableWidth;
@@ -327,14 +403,20 @@ class GanttRenderer {
 
 // ===== ファイル操作 =====
 class FileHandler {
-    constructor(dataManager) {
+    private dataManager: DataManager;
+
+    constructor(dataManager: DataManager) {
         this.dataManager = dataManager;
         this.setupEventListeners();
     }
 
-    setupEventListeners() {
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
+    private setupEventListeners(): void {
+        const uploadArea = document.getElementById('uploadArea') as HTMLDivElement;
+        const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+
+        if (!uploadArea || !fileInput) {
+            throw new Error('必要なDOM要素が見つかりません');
+        }
 
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', this.handleDragOver);
@@ -343,37 +425,46 @@ class FileHandler {
         fileInput.addEventListener('change', this.handleFileSelect.bind(this));
     }
 
-    handleDragOver(e) {
+    private handleDragOver(e: DragEvent): void {
         e.preventDefault();
-        e.currentTarget.classList.add('dragover');
+        (e.currentTarget as HTMLElement).classList.add('dragover');
     }
 
-    handleDragLeave(e) {
-        e.currentTarget.classList.remove('dragover');
+    private handleDragLeave(e: DragEvent): void {
+        (e.currentTarget as HTMLElement).classList.remove('dragover');
     }
 
-    handleDrop(e) {
+    private handleDrop(e: DragEvent): void {
         e.preventDefault();
-        e.currentTarget.classList.remove('dragover');
-        this.handleFiles(e.dataTransfer.files);
+        (e.currentTarget as HTMLElement).classList.remove('dragover');
+        if (e.dataTransfer?.files) {
+            this.handleFiles(e.dataTransfer.files);
+        }
     }
 
-    handleFileSelect(e) {
-        this.handleFiles(e.target.files);
+    private handleFileSelect(e: Event): void {
+        const target = e.target as HTMLInputElement;
+        if (target.files) {
+            this.handleFiles(target.files);
+        }
     }
 
-    handleFiles(files) {
+    private handleFiles(files: FileList): void {
         Array.from(files).forEach(file => {
             if (file.type === 'application/json' || file.name.endsWith('.json')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
-                        this.dataManager.importData(e.target.result);
-                        app.updateUI();
-                        Utils.showError = (msg) => alert('データを正常に読み込みました');
-                        Utils.showError('データを正常に読み込みました');
+                        const result = e.target?.result;
+                        if (typeof result === 'string') {
+                            this.dataManager.importData(result);
+                            if (typeof app !== 'undefined') {
+                                app.updateUI();
+                            }
+                            alert('データを正常に読み込みました');
+                        }
                     } catch (error) {
-                        Utils.showError(`ファイル読み込みエラー: ${error.message}`);
+                        Utils.showError(`ファイル読み込みエラー: ${error instanceof Error ? error.message : String(error)}`);
                     }
                 };
                 reader.readAsText(file);
@@ -383,7 +474,7 @@ class FileHandler {
         });
     }
 
-    exportData() {
+    exportData(): void {
         const data = this.dataManager.exportData();
         const blob = new Blob([JSON.stringify(data, null, 2)], {
             type: 'application/json;charset=utf-8'
@@ -400,21 +491,39 @@ class FileHandler {
 
 // ===== UIコントローラー =====
 class UIController {
-    constructor(dataManager, renderer, fileHandler) {
+    private dataManager: DataManager;
+    private renderer: GanttRenderer;
+    private fileHandler: FileHandler;
+
+    constructor(dataManager: DataManager, renderer: GanttRenderer, fileHandler: FileHandler) {
         this.dataManager = dataManager;
         this.renderer = renderer;
         this.fileHandler = fileHandler;
         this.setupEventListeners();
     }
 
-    setupEventListeners() {
-        document.getElementById('bar_register').addEventListener('click', this.handleBarAdd.bind(this));
-        document.getElementById('block_register').addEventListener('click', this.handleBlockAdd.bind(this));
-        document.getElementById('export_button').addEventListener('click', () => this.fileHandler.exportData());
+    private setupEventListeners(): void {
+        const barRegisterBtn = document.getElementById('bar_register') as HTMLButtonElement;
+        const blockRegisterBtn = document.getElementById('block_register') as HTMLButtonElement;
+        const exportBtn = document.getElementById('export_button') as HTMLButtonElement;
+
+        if (!barRegisterBtn || !blockRegisterBtn || !exportBtn) {
+            throw new Error('必要なボタン要素が見つかりません');
+        }
+
+        barRegisterBtn.addEventListener('click', this.handleBarAdd.bind(this));
+        blockRegisterBtn.addEventListener('click', this.handleBlockAdd.bind(this));
+        exportBtn.addEventListener('click', () => this.fileHandler.exportData());
     }
 
-    handleBarAdd() {
-        const label = document.getElementById('bar_label').value.trim();
+    private handleBarAdd(): void {
+        const barLabelInput = document.getElementById('bar_label') as HTMLInputElement;
+        if (!barLabelInput) {
+            Utils.showError('バーラベル入力欄が見つかりません');
+            return;
+        }
+
+        const label = barLabelInput.value.trim();
 
         if (!label) {
             Utils.showError('バー名を入力してください');
@@ -424,14 +533,24 @@ class UIController {
         this.dataManager.addBar(label);
         this.updateBarDropdown(label);
         this.updateDisplay();
-        document.getElementById('bar_label').value = '';
+        barLabelInput.value = '';
     }
 
-    handleBlockAdd() {
-        const barId = document.getElementById('block_bar').value;
-        const label = document.getElementById('block_label').value.trim();
-        const begin = document.getElementById('block_begin').value;
-        const end = document.getElementById('block_end').value;
+    private handleBlockAdd(): void {
+        const blockBarSelect = document.getElementById('block_bar') as HTMLSelectElement;
+        const blockLabelInput = document.getElementById('block_label') as HTMLInputElement;
+        const blockBeginInput = document.getElementById('block_begin') as HTMLInputElement;
+        const blockEndInput = document.getElementById('block_end') as HTMLInputElement;
+
+        if (!blockBarSelect || !blockLabelInput || !blockBeginInput || !blockEndInput) {
+            Utils.showError('必要な入力要素が見つかりません');
+            return;
+        }
+
+        const barId = blockBarSelect.value;
+        const label = blockLabelInput.value.trim();
+        const begin = blockBeginInput.value;
+        const end = blockEndInput.value;
 
         if (!barId) {
             Utils.showError('バーを選択してください');
@@ -452,19 +571,24 @@ class UIController {
             this.updateDisplay();
 
             // フォームをクリア
-            document.getElementById('block_label').value = '';
-            document.getElementById('block_begin').value = '';
-            document.getElementById('block_end').value = '';
+            blockLabelInput.value = '';
+            blockBeginInput.value = '';
+            blockEndInput.value = '';
         } catch (error) {
-            Utils.showError(error.message);
+            Utils.showError(error instanceof Error ? error.message : String(error));
         }
     }
 
-    updateBarDropdown(selectedLabel = null) {
-        const dropdown = document.getElementById('block_bar');
+    private updateBarDropdown(selectedLabel?: string): void {
+        const dropdown = document.getElementById('block_bar') as HTMLSelectElement;
+        if (!dropdown) {
+            Utils.showError('バー選択ドロップダウンが見つかりません');
+            return;
+        }
+
         dropdown.innerHTML = '<option value="">バーを選択</option>';
 
-        this.dataManager.bars.forEach(bar => {
+        this.dataManager.allBars.forEach(bar => {
             const option = document.createElement('option');
             option.value = bar.id;
             option.textContent = bar.label;
@@ -472,20 +596,24 @@ class UIController {
         });
 
         if (selectedLabel) {
-            const targetBar = this.dataManager.bars.find(bar => bar.label === selectedLabel);
+            const targetBar = this.dataManager.allBars.find(bar => bar.label === selectedLabel);
             if (targetBar) {
                 dropdown.value = targetBar.id;
             }
         }
     }
 
-    updateDisplay() {
+    private updateDisplay(): void {
         const data = this.dataManager.exportData();
         this.renderer.render(data);
-        document.getElementById('code').textContent = JSON.stringify(data, null, 2);
+        
+        const codeElement = document.getElementById('code') as HTMLPreElement;
+        if (codeElement) {
+            codeElement.textContent = JSON.stringify(data, null, 2);
+        }
     }
 
-    updateUI() {
+    updateUI(): void {
         this.updateBarDropdown();
         this.updateDisplay();
     }
@@ -493,26 +621,41 @@ class UIController {
 
 // ===== アプリケーション初期化 =====
 class GanttApp {
+    private dataManager: DataManager;
+    private renderer: GanttRenderer;
+    private fileHandler: FileHandler;
+    private uiController: UIController;
+
     constructor() {
+        const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+        if (!canvas) {
+            throw new Error('Canvas要素が見つかりません');
+        }
+
         this.dataManager = new DataManager();
-        this.renderer = new GanttRenderer(document.getElementById('canvas'));
+        this.renderer = new GanttRenderer(canvas);
         this.fileHandler = new FileHandler(this.dataManager);
         this.uiController = new UIController(this.dataManager, this.renderer, this.fileHandler);
 
         this.initialize();
     }
 
-    initialize() {
+    private initialize(): void {
         this.updateUI();
     }
 
-    updateUI() {
+    updateUI(): void {
         this.uiController.updateUI();
     }
 }
 
 // アプリケーション開始
-let app;
+let app: GanttApp;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new GanttApp();
+    try {
+        app = new GanttApp();
+    } catch (error) {
+        console.error('アプリケーションの初期化に失敗しました:', error);
+        Utils.showError(`アプリケーションの初期化に失敗しました: ${error instanceof Error ? error.message : String(error)}`);
+    }
 });
