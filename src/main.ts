@@ -304,7 +304,7 @@ class DataManager {
 }
 
 // ===== レンダラー =====
-class GanttRenderer {
+class GanttCanvasRenderer {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
 
@@ -492,10 +492,10 @@ class FileHandler {
 // ===== UIコントローラー =====
 class UIController {
     private dataManager: DataManager;
-    private renderer: GanttRenderer;
+    private renderer: GanttCanvasRenderer;
     private fileHandler: FileHandler;
 
-    constructor(dataManager: DataManager, renderer: GanttRenderer, fileHandler: FileHandler) {
+    constructor(dataManager: DataManager, renderer: GanttCanvasRenderer, fileHandler: FileHandler) {
         this.dataManager = dataManager;
         this.renderer = renderer;
         this.fileHandler = fileHandler;
@@ -622,7 +622,7 @@ class UIController {
 // ===== アプリケーション初期化 =====
 class GanttApp {
     private dataManager: DataManager;
-    private renderer: GanttRenderer;
+    private renderer: GanttCanvasRenderer;
     private fileHandler: FileHandler;
     private uiController: UIController;
 
@@ -633,7 +633,7 @@ class GanttApp {
         }
 
         this.dataManager = new DataManager();
-        this.renderer = new GanttRenderer(canvas);
+        this.renderer = new GanttCanvasRenderer(canvas);
         this.fileHandler = new FileHandler(this.dataManager);
         this.uiController = new UIController(this.dataManager, this.renderer, this.fileHandler);
 
