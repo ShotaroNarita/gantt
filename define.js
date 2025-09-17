@@ -132,7 +132,7 @@ function assign_block_to_bar(block_id, bar_id) {
     blocks_by_bars[bar_id].push(block_id);
 }
 
-function join() {
+function export_json() {
     let metrics = { "max": -Infinity, "min": Infinity };
     for (let block of blocks) {
         metrics["max"] = Math.max(metrics["max"], block.end);
@@ -161,22 +161,62 @@ function join() {
     return rev
 }
 
-join();
+function import_json(json) {
+    blocks = [];
+    bars = [];
+    blocks_by_bars = {};
+
+    const data = typeof json === 'string' ? JSON.parse(json) : json;
+    for (let bar_data of data.bars) {
+        const bar = new Bar(bar_data.label);
+        bars.push(bar);
+        blocks_by_bars[bar.id] = [];
+        for (let block_data of bar_data.blocks) {
+            const block = new Block(dayjs.unix(block_data.begin).format('YYYY-MM-DD'), dayjs.unix(block_data.end).format('YYYY-MM-DD'), block_data.label);
+            blocks.push(block);
+            blocks_by_bars[bar.id].push(block.id);
+        }
+    }
+}
+
+import_json(export_json());
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+
+
 const draw = () => {
+
     const width = canvas.width;
     const height = canvas.height;
+
+    data = export_json()
 
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = 'aliceblue';
     ctx.fillRect(0, 0, width, height);
+
+    // draw vertical lines
+    const num_lines = 10;
+    for (let i = 0; i <= num_lines; i++) {
+        const x = 100 + i * (width - 150) / num_lines;
+        ctx.strokeStyle = '#cccccc';
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+
+        const timestamp = data.metrics.min + i * data.metrics.range / num_lines;
+        const date = dayjs.unix(timestamp).format('YYYY/MM/DD');
+        ctx.fillStyle = '#000000';
+        ctx.fillText(date, x - 10, height - 10 * (3 - i % 3));
+    }
     const bar_height = 50;
     const bar_margin = 15;
 
-    join().bars.forEach((bar, bar_index) => {
+
+    data.bars.forEach((bar, bar_index) => {
         const y = bar_index * (bar_height + bar_margin) + bar_margin;
         ctx.fillStyle = '#000000';
         ctx.fillText(bar.label, 10, y + bar_height / 2);
@@ -195,8 +235,8 @@ const draw = () => {
             ctx.fillText(block.label, x + 5, y + bar_height / 2);
         });
     });
+
+    document.getElementById('code').textContent = JSON.stringify(export_json(), null, 2);
 };
 
 draw();
-
-// document.getElementById('code').textContent = JSON.stringify(join(), null, 2);

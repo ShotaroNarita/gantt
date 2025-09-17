@@ -58,30 +58,93 @@
     </div>
 
 
-    <div>
-        <div>
-            <h3>bars</h3>
-            <ul id="bar_list"></ul>
-        </div>
+    <p> <button id="export_button">export</button> </p>
 
-        <hr>
-        <div>
-            <h3>blocks</h3>
-            <ul id="block_list"></ul>
-        </div>
+    <div id="uploadArea">
+    <input type="file" id="fileInput" accept="*/*">
     </div>
 
+    <canvas id="canvas" width="600" height="400"></canvas>
 
     <div>
         <pre><code id="code"></code></pre>
     </div>
 
-    <canvas id="canvas" width="600" height="400"></canvas>
 
     <script src="./dayjs.min.js"></script>
     <script src="./define.js"></script>
 
     <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        document.getElementById('export_button').onclick = () => {
+            download('gantt_data.json');
+        };
+
+        // アップロードエリアクリックでファイル選択
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // ドラッグ&ドロップ処理
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        // ファイル選択時の処理
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+
+            // jsonファイルとして読み込み
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+
+                        const json = JSON.parse(e.target.result);
+                        import_json(json);
+                        init_bar_dropdown();
+                        draw();
+                    } catch (error) {
+                        alert('Invalid JSON file');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+
+        function download(filename = 'data.json') {
+            const jsonString = JSON.stringify(export_json(), null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+
         const init_bar_dropdown = (latest_label) => {
             const bar_dropdown = document.getElementById('block_bar');
 
@@ -89,15 +152,6 @@
             while (bar_dropdown.firstChild) {
                 bar_dropdown.removeChild(bar_dropdown.firstChild);
             }
-
-            // add
-            // Object.keys(Bar.ITEMS).forEach(id => {
-            //     bar = Bar.ITEMS[id];
-            //     const option = document.createElement('option');
-            //     option.value = id;
-            //     option.text = bar.label;
-            //     bar_dropdown.appendChild(option);
-            // });
 
             for (let bar of bars) {
                 const option = document.createElement('option');
