@@ -401,6 +401,491 @@ class GanttCanvasRenderer {
     }
 }
 
+// ===== SVGレンダラー (未使用) =====
+// ===== SVGレンダラー =====
+class GanttSvgRenderer {
+    private container: HTMLElement;
+    private svg: SVGSVGElement;
+    private defs: SVGDefsElement;
+    private mainGroup: SVGGElement;
+
+    constructor(container: HTMLElement | string) {
+        if (typeof container === 'string') {
+            const element = document.getElementById(container);
+            if (!element) {
+                throw new Error(`要素が見つかりません: ${container}`);
+            }
+            this.container = element;
+        } else {
+            this.container = container;
+        }
+
+        this.initializeSvg();
+    }
+
+    private initializeSvg(): void {
+        // 既存のSVGがあれば削除
+        const existingSvg = this.container.querySelector('svg');
+        if (existingSvg) {
+            existingSvg.remove();
+        }
+
+        // SVG要素を作成
+        this.svg = this.createSvgElement('svg', {
+            width: '100%',
+            height: '500',
+            viewBox: '0 0 1000 500',
+            xmlns: 'http://www.w3.org/2000/svg'
+        });
+
+        // デフィニション要素を作成（パターン、グラデーション等用）
+        this.defs = this.createSvgElement('defs') as SVGDefsElement;
+        this.svg.appendChild(this.defs);
+
+        // メイングループを作成
+        this.mainGroup = this.createSvgElement('g', {
+            id: 'main-group'
+        }) as SVGGElement;
+        this.svg.appendChild(this.mainGroup);
+
+        this.container.appendChild(this.svg);
+    }
+
+    private createSvgElement<T extends SVGElement>(
+        tagName: string,
+        attributes: Record<string, string | number> = {}
+    ): T {
+        const element = document.createElementNS('http://www.w3.org/2000/svg', tagName) as T;
+        
+        Object.entries(attributes).forEach(([key, value]) => {
+            element.setAttribute(key, String(value));
+        });
+
+        return element;
+    }
+
+    render(data: ExportData): void {
+        this.clearContent();
+        this.createGradientDefs();
+        this.calculateDimensions(data);
+        this.drawBackground();
+        this.drawGrid(data.metrics);
+        this.drawBars(data.bars, data.metrics);
+        this.addInteractivity();
+    }
+
+    private clearContent(): void {
+        // メイングループの内容をクリア
+        this.mainGroup.innerHTML = '';
+        // デフィニションもクリア
+        this.defs.innerHTML = '';
+    }
+
+    private createGradientDefs(): void {
+        // ブロック用のグラデーションを作成
+        const gradient = this.createSvgElement('linearGradient', {
+            id: 'blockGradient',
+            x1: '0%',
+            y1: '0%',
+            x2: '0%',
+            y2: '100%'
+        });
+
+        const stop1 = this.createSvgElement('stop', {
+            offset: '0%',
+            'stop-color': 'rgba(255,255,255,0.3)'
+        });
+
+        const stop2 = this.createSvgElement('stop', {
+            offset: '100%',
+            'stop-color': 'rgba(0,0,0,0.1)'
+        });
+
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        this.defs.appendChild(gradient);
+
+        // ホバー用のドロップシャドウフィルターを作成
+        const filter = this.createSvgElement('filter', {
+            id: 'dropShadow',
+            x: '-20%',
+            y: '-20%',
+            width: '140%',
+            height: '140%'
+        });
+
+        const feDropShadow = this.createSvgElement('feDropShadow', {
+            dx: '2',
+            dy: '2',
+            'flood-color': 'rgba(0,0,0,0.3)',
+            'flood-opacity': '0.5'
+        });
+
+        filter.appendChild(feDropShadow);
+        this.defs.appendChild(filter);
+    }
+
+    private calculateDimensions(data: ExportData): void {
+        const barCount = data.bars.length;
+        const requiredHeight = Math.max(
+            barCount * (Config.CANVAS.BAR_HEIGHT + Config.CANVAS.BAR_MARGIN) + Config.CANVAS.BAR_MARGIN + 100,
+            500
+        );
+
+        this.svg.setAttribute('height', String(requiredHeight));
+        this.svg.setAttribute('viewBox', `0 0 1000 ${requiredHeight}`);
+    }
+
+    private drawBackground(): void {
+        const rect = this.createSvgElement('rect', {
+            x: '0',
+            y: '0',
+            width: '100%',
+            height: '100%',
+            fill: 'aliceblue',
+            'fill-opacity': '0.3'
+        });
+
+        this.mainGroup.appendChild(rect);
+    }
+
+    private drawGrid(metrics: Metrics): void {
+        const gridGroup = this.createSvgElement('g', {
+            id: 'grid-group',
+            'stroke': '#cccccc',
+            'stroke-width': '1',
+            'stroke-opacity': '0.7'
+        }) as SVGGElement;
+
+        const labelsGroup = this.createSvgElement('g', {
+            id: 'grid-labels',
+            'font-family': 'Arial, sans-serif',
+            'font-size': '12',
+            'fill': '#666666',
+            'text-anchor': 'middle'
+        }) as SVGGElement;
+
+        const { MARGIN_LEFT, MARGIN_RIGHT, GRID_LINES } = Config.CANVAS;
+        const svgWidth = 1000; // viewBox width
+        const availableWidth = svgWidth - MARGIN_LEFT - MARGIN_RIGHT;
+
+        for (let i = 0; i <= GRID_LINES; i++) {
+            const x = MARGIN_LEFT + (i * availableWidth) / GRID_LINES;
+
+            // 縦線
+            const line = this.createSvgElement('line', {
+                x1: x,
+                y1: '0',
+                x2: x,
+                y2: '100%'
+            });
+            gridGroup.appendChild(line);
+
+            // 日付ラベル
+            const timestamp = metrics.min + (i * metrics.range) / GRID_LINES;
+            const date = dayjs.unix(timestamp).format('MM/DD');
+            
+            const text = this.createSvgElement('text', {
+                x: x,
+                y: `calc(100% - ${20 + (i % 3) * 15}px)`,
+                'dominant-baseline': 'text-before-edge'
+            });
+            text.textContent = date;
+            labelsGroup.appendChild(text);
+        }
+
+        this.mainGroup.appendChild(gridGroup);
+        this.mainGroup.appendChild(labelsGroup);
+    }
+
+    private drawBars(bars: ExportBarData[], metrics: Metrics): void {
+        const barsGroup = this.createSvgElement('g', {
+            id: 'bars-group'
+        }) as SVGGElement;
+
+        const { MARGIN_LEFT, MARGIN_RIGHT, BAR_HEIGHT, BAR_MARGIN } = Config.CANVAS;
+        const svgWidth = 1000;
+        const availableWidth = svgWidth - MARGIN_LEFT - MARGIN_RIGHT;
+
+        bars.forEach((bar, barIndex) => {
+            const y = barIndex * (BAR_HEIGHT + BAR_MARGIN) + BAR_MARGIN;
+
+            // バーグループを作成
+            const barGroup = this.createSvgElement('g', {
+                id: `bar-${bar.id}`,
+                class: 'bar-group'
+            }) as SVGGElement;
+
+            // バーラベル
+            const barLabel = this.createSvgElement('text', {
+                x: '10',
+                y: y + BAR_HEIGHT / 2,
+                'font-family': 'Arial, sans-serif',
+                'font-size': '14',
+                'font-weight': 'bold',
+                'fill': '#000000',
+                'dominant-baseline': 'middle'
+            });
+            barLabel.textContent = bar.label;
+            barGroup.appendChild(barLabel);
+
+            // ブロックを描画
+            bar.blocks.forEach((block, blockIndex) => {
+                const blockElement = this.drawBlock(block, y, availableWidth, blockIndex);
+                barGroup.appendChild(blockElement);
+            });
+
+            barsGroup.appendChild(barGroup);
+        });
+
+        this.mainGroup.appendChild(barsGroup);
+    }
+
+    private drawBlock(block: NormalizedBlock, y: number, availableWidth: number, blockIndex: number): SVGGElement {
+        const { MARGIN_LEFT, BAR_HEIGHT } = Config.CANVAS;
+
+        const x = MARGIN_LEFT + block.normalized.begin * availableWidth;
+        const w = Math.max(block.normalized.range * availableWidth, 2); // 最小幅2px
+
+        // ブロックグループ
+        const blockGroup = this.createSvgElement('g', {
+            id: `block-${block.id}`,
+            class: 'block-group',
+            'data-block-id': block.id,
+            'data-label': block.label,
+            'data-begin': dayjs.unix(block.begin).format('YYYY-MM-DD'),
+            'data-end': dayjs.unix(block.end).format('YYYY-MM-DD')
+        }) as SVGGElement;
+
+        // ブロックの背景矩形
+        const blockRect = this.createSvgElement('rect', {
+            x: x,
+            y: y,
+            width: w,
+            height: BAR_HEIGHT,
+            fill: Utils.selectColorByText(block.label),
+            stroke: '#000000',
+            'stroke-width': '1',
+            'stroke-opacity': '0.8',
+            rx: '2', // 角を少し丸める
+            ry: '2'
+        });
+
+        // グラデーションオーバーレイ
+        const gradientOverlay = this.createSvgElement('rect', {
+            x: x,
+            y: y,
+            width: w,
+            height: BAR_HEIGHT,
+            fill: 'url(#blockGradient)',
+            'pointer-events': 'none',
+            rx: '2',
+            ry: '2'
+        });
+
+        blockGroup.appendChild(blockRect);
+        blockGroup.appendChild(gradientOverlay);
+
+        // ラベルテキスト（幅が十分な場合のみ）
+        if (w > 60) {
+            const blockLabel = this.createSvgElement('text', {
+                x: x + 5,
+                y: y + BAR_HEIGHT / 2,
+                'font-family': 'Arial, sans-serif',
+                'font-size': '12',
+                'fill': '#000000',
+                'dominant-baseline': 'middle',
+                'pointer-events': 'none' // テキストをクリック対象から除外
+            });
+            blockLabel.textContent = block.label;
+            blockGroup.appendChild(blockLabel);
+        }
+
+        return blockGroup;
+    }
+
+    private addInteractivity(): void {
+        // ホバー効果
+        const blocks = this.mainGroup.querySelectorAll('.block-group');
+        
+        blocks.forEach(block => {
+            const rect = block.querySelector('rect:first-child') as SVGRectElement;
+            if (!rect) return;
+
+            block.addEventListener('mouseenter', () => {
+                rect.setAttribute('filter', 'url(#dropShadow)');
+                rect.setAttribute('stroke-width', '2');
+                this.showTooltip(block as SVGGElement);
+            });
+
+            block.addEventListener('mouseleave', () => {
+                rect.removeAttribute('filter');
+                rect.setAttribute('stroke-width', '1');
+                this.hideTooltip();
+            });
+
+            block.addEventListener('click', () => {
+                this.handleBlockClick(block as SVGGElement);
+            });
+        });
+    }
+
+    private showTooltip(blockElement: SVGGElement): void {
+        const label = blockElement.getAttribute('data-label') || '';
+        const begin = blockElement.getAttribute('data-begin') || '';
+        const end = blockElement.getAttribute('data-end') || '';
+
+        // 既存のツールチップを削除
+        this.hideTooltip();
+
+        const tooltip = this.createSvgElement('g', {
+            id: 'tooltip',
+            'pointer-events': 'none'
+        }) as SVGGElement;
+
+        const tooltipText = `${label}\n${begin} → ${end}`;
+        const lines = tooltipText.split('\n');
+
+        // ツールチップの背景
+        const tooltipBg = this.createSvgElement('rect', {
+            x: '0',
+            y: '0',
+            width: Math.max(...lines.map(line => line.length * 7)) + 16,
+            height: lines.length * 16 + 8,
+            fill: '#333333',
+            'fill-opacity': '0.9',
+            stroke: '#666666',
+            'stroke-width': '1',
+            rx: '4',
+            ry: '4'
+        });
+
+        tooltip.appendChild(tooltipBg);
+
+        // ツールチップのテキスト
+        lines.forEach((line, index) => {
+            const text = this.createSvgElement('text', {
+                x: '8',
+                y: 16 + index * 16,
+                'font-family': 'Arial, sans-serif',
+                'font-size': '12',
+                'fill': '#ffffff'
+            });
+            text.textContent = line;
+            tooltip.appendChild(text);
+        });
+
+        // マウス位置の近くに配置（簡易実装）
+        tooltip.setAttribute('transform', 'translate(100, 50)');
+
+        this.svg.appendChild(tooltip);
+    }
+
+    private hideTooltip(): void {
+        const tooltip = this.svg.querySelector('#tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
+    }
+
+    private handleBlockClick(blockElement: SVGGElement): void {
+        const blockId = blockElement.getAttribute('data-block-id');
+        const label = blockElement.getAttribute('data-label');
+        
+        console.log('Block clicked:', { blockId, label });
+        
+        // カスタムイベントを発火
+        const event = new CustomEvent('blockClick', {
+            detail: {
+                blockId,
+                label,
+                begin: blockElement.getAttribute('data-begin'),
+                end: blockElement.getAttribute('data-end')
+            }
+        });
+        
+        this.container.dispatchEvent(event);
+    }
+
+    // パブリックメソッド: 特定のブロックをハイライト
+    public highlightBlock(blockId: string): void {
+        // 既存のハイライトを削除
+        this.clearHighlights();
+
+        const blockElement = this.mainGroup.querySelector(`[data-block-id="${blockId}"]`);
+        if (blockElement) {
+            const rect = blockElement.querySelector('rect:first-child') as SVGRectElement;
+            if (rect) {
+                rect.setAttribute('stroke', '#ff0000');
+                rect.setAttribute('stroke-width', '3');
+                rect.setAttribute('filter', 'url(#dropShadow)');
+            }
+        }
+    }
+
+    // パブリックメソッド: ハイライトをクリア
+    public clearHighlights(): void {
+        const highlightedBlocks = this.mainGroup.querySelectorAll('.block-group rect[stroke="#ff0000"]');
+        highlightedBlocks.forEach(rect => {
+            rect.setAttribute('stroke', '#000000');
+            rect.setAttribute('stroke-width', '1');
+            rect.removeAttribute('filter');
+        });
+    }
+
+    // パブリックメソッド: SVGをダウンロード
+    public exportSvg(filename: string = `gantt_chart_${dayjs().format('YYYY-MM-DD')}.svg`): void {
+        const svgData = new XMLSerializer().serializeToString(this.svg);
+        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // パブリックメソッド: PNGとしてエクスポート
+    public exportPng(filename: string = `gantt_chart_${dayjs().format('YYYY-MM-DD')}.png`): void {
+        const svgData = new XMLSerializer().serializeToString(this.svg);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+            throw new Error('Canvas context を取得できませんでした');
+        }
+
+        const img = new Image();
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        img.onload = () => {
+            canvas.width = img.width || 1000;
+            canvas.height = img.height || 500;
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob(blob => {
+                if (blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(pngUrl);
+                }
+            }, 'image/png');
+
+            URL.revokeObjectURL(url);
+        };
+
+        img.src = url;
+    }
+}
+
 // ===== ファイル操作 =====
 class FileHandler {
     private dataManager: DataManager;
