@@ -118,7 +118,7 @@
             <h3>ファイル操作</h3>
             <div class="upload-area" id="uploadArea">
                 <p>JSONファイルをドラッグ&ドロップまたはクリックして選択</p>
-                <input type="file" id="fileInput" accept=".json" style="display: none;">
+                <input type="file" id="fileInput" accept=".yaml" style="display: none;">
             </div>
             <button id="export_button">データをエクスポート</button>
         </div>
@@ -126,11 +126,12 @@
         <div id="canvas" width="1000" height="400"></div>
         
         <details style="margin-top: 20px;">
-            <summary>データ構造（JSON）</summary>
+            <summary>データ構造（YAML）</summary>
             <div id="code"></div>
         </details>
     </div>
 
+    <script src="./lib/lib-yaml.js"></script>
     <script src="./lib/dayjs.min.js"></script>
     <script src="./dist/main.js"></script>
 </body>

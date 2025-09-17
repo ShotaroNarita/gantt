@@ -44,6 +44,7 @@ interface CanvasConfig {
 }
 
 declare const dayjs: any;
+declare const jsyaml: any;
 
 // ===== 設定とユーティリティ =====
 class Config {
@@ -273,9 +274,9 @@ class DataManager {
         };
     }
 
-    importData(jsonData: string | ExportData): void {
+    importData(strData: string | ExportData): void {
         try {
-            const data: ExportData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+            const data: ExportData = typeof strData === 'string' ? jsyaml.load(strData) : strData;
 
             this.bars = [];
 
@@ -935,7 +936,7 @@ class FileHandler {
 
     private handleFiles(files: FileList): void {
         Array.from(files).forEach(file => {
-            if (file.type === 'application/json' || file.name.endsWith('.json')) {
+            if (file.type === 'application/yaml' || file.name.endsWith('.yaml')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
@@ -945,7 +946,6 @@ class FileHandler {
                             if (typeof app !== 'undefined') {
                                 app.updateUI();
                             }
-                            alert('データを正常に読み込みました');
                         }
                     } catch (error) {
                         Utils.showError(`ファイル読み込みエラー: ${error instanceof Error ? error.message : String(error)}`);
@@ -960,14 +960,14 @@ class FileHandler {
 
     exportData(): void {
         const data = this.dataManager.exportData();
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-            type: 'application/json;charset=utf-8'
+        const blob = new Blob([jsyaml.dump(data)], {
+            type: 'application/yaml;charset=utf-8'
         });
 
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gantt_data_${dayjs().format('YYYY-MM-DD')}.json`;
+        a.download = `gantt_data_${dayjs().format('YYYY-MM-DD')}.yaml`;
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -1093,7 +1093,7 @@ class UIController {
         
         const codeElement = document.getElementById('code') as HTMLPreElement;
         if (codeElement) {
-            codeElement.textContent = JSON.stringify(data, null, 2);
+            codeElement.textContent =  jsyaml.dump(data);
         }
     }
 

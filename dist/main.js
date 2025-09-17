@@ -177,9 +177,9 @@ class DataManager {
             metrics
         };
     }
-    importData(jsonData) {
+    importData(strData) {
         try {
-            const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+            const data = typeof strData === 'string' ? jsyaml.load(strData) : strData;
             this.bars = [];
             data.bars.forEach(barData => {
                 const bar = new Bar(barData.label);
@@ -674,7 +674,7 @@ class FileHandler {
     }
     handleFiles(files) {
         Array.from(files).forEach(file => {
-            if (file.type === 'application/json' || file.name.endsWith('.json')) {
+            if (file.type === 'application/yaml' || file.name.endsWith('.yaml')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     var _a;
@@ -685,7 +685,6 @@ class FileHandler {
                             if (typeof app !== 'undefined') {
                                 app.updateUI();
                             }
-                            alert('データを正常に読み込みました');
                         }
                     }
                     catch (error) {
@@ -701,13 +700,13 @@ class FileHandler {
     }
     exportData() {
         const data = this.dataManager.exportData();
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-            type: 'application/json;charset=utf-8'
+        const blob = new Blob([jsyaml.dump(data)], {
+            type: 'application/yaml;charset=utf-8'
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gantt_data_${dayjs().format('YYYY-MM-DD')}.json`;
+        a.download = `gantt_data_${dayjs().format('YYYY-MM-DD')}.yaml`;
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -808,7 +807,7 @@ class UIController {
         this.renderer.render(data);
         const codeElement = document.getElementById('code');
         if (codeElement) {
-            codeElement.textContent = JSON.stringify(data, null, 2);
+            codeElement.textContent = jsyaml.dump(data);
         }
     }
     updateUI() {

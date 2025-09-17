@@ -36,6 +36,7 @@ interface CanvasConfig {
     GRID_LINES: number;
 }
 declare const dayjs: any;
+declare const jsyaml: any;
 declare class Config {
     static readonly PALETTE: string[];
     static readonly CANVAS: CanvasConfig;
@@ -76,7 +77,7 @@ declare class DataManager {
     assignBlockToBar(block: Block, barId: string): string;
     getMetrics(): Metrics;
     exportData(): ExportData;
-    importData(jsonData: string | ExportData): void;
+    importData(strData: string | ExportData): void;
     get allBars(): readonly Bar[];
 }
 declare class GanttCanvasRenderer {
