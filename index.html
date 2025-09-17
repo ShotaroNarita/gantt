@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ガントチャート - リファクタリング版</title>
+    <title>Simple Gantt</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
     <style>
         body {
@@ -93,23 +93,25 @@
 </head>
 <body>
     <div class="container">
-        <h1>ガントチャート管理システム</h1>
         
         <div class="controls">
             <div class="control-group">
-                <h3>バー管理</h3>
-                <input type="text" id="bar_label" placeholder="バー名を入力">
-                <button id="bar_register">バーを追加</button>
+                <h3>Bar</h3>
+                <input type="text" id="bar_label" placeholder="Bar name">
+                <button id="bar_register">Add</button>
             </div>
             
             <div class="control-group">
-                <h3>ブロック管理</h3>
+                <h3>Event</h3>
                 <select id="block_bar">
-                    <option value="">バーを選択</option>
+                    <option value="">Select Bar</option>
                 </select>
-                <input type="text" id="block_label" placeholder="ブロック名を入力">
-                <input type="date" id="block_begin" placeholder="開始日">
-                <input type="date" id="block_end" placeholder="終了日">
+                <input type="text" id="block_label" placeholder="Input Block Name">
+                <!-- <input type="date" id="block_begin" placeholder="開始日"> -->
+                <!-- <input type="date" id="block_end" placeholder="終了日"> -->
+
+                <input type="text" id="block_begin">
+                <input type="text" id="block_end">
                 <button id="block_register">ブロックを追加</button>
             </div>
         </div>

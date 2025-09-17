@@ -355,7 +355,7 @@ class GanttCanvasRenderer {
 
             // 日付ラベルを描画
             const timestamp = metrics.min + i * metrics.range / GRID_LINES;
-            const date = dayjs.unix(timestamp).format('MM/DD');
+            const date = dayjs.unix(timestamp).format('YYYY/MM/DD');
             this.ctx.fillText(date, x - 15, height - 10 - (i % 3) * 15);
         }
     }
@@ -583,7 +583,7 @@ class GanttSvgRenderer {
 
             // 日付ラベル
             const timestamp = metrics.min + (i * metrics.range) / GRID_LINES;
-            const date = dayjs.unix(timestamp).format('MM/DD');
+            const date = dayjs.unix(timestamp).format('YYYY/MM/DD');
             
             const text = this.createSvgElement('text', {
                 x: x,

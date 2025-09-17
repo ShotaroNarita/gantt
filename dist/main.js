@@ -235,7 +235,7 @@ class GanttCanvasRenderer {
             this.ctx.lineTo(x, height);
             this.ctx.stroke();
             const timestamp = metrics.min + i * metrics.range / GRID_LINES;
-            const date = dayjs.unix(timestamp).format('MM/DD');
+            const date = dayjs.unix(timestamp).format('YYYY/MM/DD');
             this.ctx.fillText(date, x - 15, height - 10 - (i % 3) * 15);
         }
     }
@@ -399,7 +399,7 @@ class GanttSvgRenderer {
             });
             gridGroup.appendChild(line);
             const timestamp = metrics.min + (i * metrics.range) / GRID_LINES;
-            const date = dayjs.unix(timestamp).format('MM/DD');
+            const date = dayjs.unix(timestamp).format('YYYY/MM/DD');
             const text = this.createSvgElement('text', {
                 x: x,
                 y: `calc(100% - ${20 + (i % 3) * 15}px)`,
