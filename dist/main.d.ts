@@ -79,7 +79,7 @@ declare class DataManager {
     importData(jsonData: string | ExportData): void;
     get allBars(): readonly Bar[];
 }
-declare class GanttRenderer {
+declare class GanttCanvasRenderer {
     private canvas;
     private ctx;
     constructor(canvas: HTMLCanvasElement);
@@ -89,6 +89,31 @@ declare class GanttRenderer {
     private drawGrid;
     private drawBars;
     private drawBlock;
+}
+declare class GanttSvgRenderer {
+    private container;
+    private svg;
+    private defs;
+    private mainGroup;
+    constructor(container: HTMLElement | string);
+    private initializeSvg;
+    private createSvgElement;
+    render(data: ExportData): void;
+    private clearContent;
+    private createGradientDefs;
+    private calculateDimensions;
+    private drawBackground;
+    private drawGrid;
+    private drawBars;
+    private drawBlock;
+    private addInteractivity;
+    private showTooltip;
+    private hideTooltip;
+    private handleBlockClick;
+    highlightBlock(blockId: string): void;
+    clearHighlights(): void;
+    exportSvg(filename?: string): void;
+    exportPng(filename?: string): void;
 }
 declare class FileHandler {
     private dataManager;
@@ -105,7 +130,7 @@ declare class UIController {
     private dataManager;
     private renderer;
     private fileHandler;
-    constructor(dataManager: DataManager, renderer: GanttRenderer, fileHandler: FileHandler);
+    constructor(dataManager: DataManager, renderer: GanttSvgRenderer, fileHandler: FileHandler);
     private setupEventListeners;
     private handleBarAdd;
     private handleBlockAdd;

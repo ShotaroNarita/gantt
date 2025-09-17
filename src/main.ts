@@ -401,13 +401,12 @@ class GanttCanvasRenderer {
     }
 }
 
-// ===== SVGレンダラー (未使用) =====
 // ===== SVGレンダラー =====
 class GanttSvgRenderer {
     private container: HTMLElement;
-    private svg: SVGSVGElement;
-    private defs: SVGDefsElement;
-    private mainGroup: SVGGElement;
+    private svg!: SVGSVGElement;
+    private defs!: SVGDefsElement;
+    private mainGroup!: SVGGElement;
 
     constructor(container: HTMLElement | string) {
         if (typeof container === 'string') {
@@ -977,10 +976,10 @@ class FileHandler {
 // ===== UIコントローラー =====
 class UIController {
     private dataManager: DataManager;
-    private renderer: GanttCanvasRenderer;
+    private renderer: GanttSvgRenderer;
     private fileHandler: FileHandler;
 
-    constructor(dataManager: DataManager, renderer: GanttCanvasRenderer, fileHandler: FileHandler) {
+    constructor(dataManager: DataManager, renderer: GanttSvgRenderer, fileHandler: FileHandler) {
         this.dataManager = dataManager;
         this.renderer = renderer;
         this.fileHandler = fileHandler;
@@ -1107,18 +1106,18 @@ class UIController {
 // ===== アプリケーション初期化 =====
 class GanttApp {
     private dataManager: DataManager;
-    private renderer: GanttCanvasRenderer;
+    private renderer: GanttSvgRenderer;
     private fileHandler: FileHandler;
     private uiController: UIController;
 
     constructor() {
-        const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+        const canvas = document.getElementById('canvas') as HTMLElement;
         if (!canvas) {
             throw new Error('Canvas要素が見つかりません');
         }
 
         this.dataManager = new DataManager();
-        this.renderer = new GanttCanvasRenderer(canvas);
+        this.renderer = new GanttSvgRenderer(canvas);
         this.fileHandler = new FileHandler(this.dataManager);
         this.uiController = new UIController(this.dataManager, this.renderer, this.fileHandler);
 
