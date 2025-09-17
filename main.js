@@ -240,3 +240,136 @@ const draw = () => {
 };
 
 draw();
+
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+
+document.getElementById('export_button').onclick = () => {
+    download('gantt_data.json');
+};
+
+// アップロードエリアクリックでファイル選択
+uploadArea.addEventListener('click', () => {
+    fileInput.click();
+});
+
+// ドラッグ&ドロップ処理
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+});
+
+// ファイル選択時の処理
+fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+
+    // jsonファイルとして読み込み
+    for (let file of files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+
+                const json = JSON.parse(e.target.result);
+                import_json(json);
+                init_bar_dropdown();
+                draw();
+            } catch (error) {
+                alert('Invalid JSON file');
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+
+
+function download(filename = 'data.json') {
+    const jsonString = JSON.stringify(export_json(), null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+const init_bar_dropdown = (latest_label) => {
+    const bar_dropdown = document.getElementById('block_bar');
+
+    // clear
+    while (bar_dropdown.firstChild) {
+        bar_dropdown.removeChild(bar_dropdown.firstChild);
+    }
+
+    for (let bar of bars) {
+        const option = document.createElement('option');
+        option.value = bar.id;
+        option.text = bar.label;
+        bar_dropdown.appendChild(option);
+    }
+
+
+    if (latest_label) {
+        res = bars.find(bar => bar.label === latest_label);
+        if (res)
+            bar_dropdown.value = res.id
+    }
+};
+
+document.getElementById('bar_register').onclick = () => {
+    const label = document.getElementById('bar_label').value;
+    if (label === '') {
+        alert('input bar name');
+        return;
+    }
+    add_bar(label);
+    init_bar_dropdown(label);
+    draw();
+};
+
+document.getElementById('block_register').onclick = () => {
+    const bar_id = document.getElementById('block_bar').value;
+    const label = document.getElementById('block_label').value;
+    const begin = document.getElementById('block_begin').value;
+    const end = document.getElementById('block_end').value;
+
+    if (bar_id === '') {
+        alert('select bar');
+        return;
+    }
+    if (label === '') {
+        alert('input block name');
+        return;
+    }
+    if (begin === '') {
+        alert('input begin date');
+        return;
+    }
+    if (end === '') {
+        alert('input end date');
+        return;
+    }
+
+    const id = add_block(begin, end, label);
+    assign_block_to_bar(id, bar_id);
+    draw();
+};
