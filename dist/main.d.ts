@@ -80,17 +80,6 @@ declare class DataManager {
     importData(strData: string | ExportData): void;
     get allBars(): readonly Bar[];
 }
-declare class GanttCanvasRenderer {
-    private canvas;
-    private ctx;
-    constructor(canvas: HTMLCanvasElement);
-    render(data: ExportData): void;
-    private clearCanvas;
-    private drawBackground;
-    private drawGrid;
-    private drawBars;
-    private drawBlock;
-}
 declare class GanttSvgRenderer {
     private container;
     private svg;
