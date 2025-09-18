@@ -11,12 +11,12 @@ interface NormalizedBlock extends BlockData {
         range: number;
     };
 }
-interface BarData {
+interface SlotData {
     id: string;
     label: string;
     blocks: BlockData[];
 }
-interface ExportBarData extends BarData {
+interface ExportSlotData extends SlotData {
     blocks: NormalizedBlock[];
 }
 interface Metrics {
@@ -25,7 +25,7 @@ interface Metrics {
     range: number;
 }
 interface ExportData {
-    bars: ExportBarData[];
+    slots: ExportSlotData[];
     metrics: Metrics;
 }
 interface CanvasConfig {
@@ -57,28 +57,28 @@ declare class Block {
     getDuration(): number;
     toJSON(): BlockData;
 }
-declare class Bar {
+declare class Slot {
     readonly id: string;
     readonly label: string;
     readonly blocks: Array<Block>;
     constructor(label: string);
     addBlock(block: Block): void;
     removeBlock(blockId: string): void;
-    toJSON(): BarData;
+    toJSON(): SlotData;
 }
 declare class DataManager {
-    private bars;
+    private slots;
     constructor();
     reset(): void;
     private initializeDefaultData;
-    addBar(label: string): Bar;
-    findBar(barId: string): Bar | undefined;
+    addSlot(label: string): Slot;
+    findSlot(slotId: string): Slot | undefined;
     addBlock(begin: string, end: string, label: string): Block;
-    assignBlockToBar(block: Block, barId: string): string;
+    assignBlockToSlot(block: Block, slotId: string): string;
     getMetrics(): Metrics;
     exportData(): ExportData;
     importData(strData: string | ExportData): void;
-    get allBars(): readonly Bar[];
+    get allSlots(): readonly Slot[];
 }
 declare class GanttSvgRenderer {
     private container;
@@ -94,7 +94,7 @@ declare class GanttSvgRenderer {
     private calculateDimensions;
     private drawBackground;
     private drawGrid;
-    private drawBars;
+    private drawSlots;
     private drawBlock;
     private addInteractivity;
     private showTooltip;
@@ -122,9 +122,9 @@ declare class UIController {
     private fileHandler;
     constructor(dataManager: DataManager, renderer: GanttSvgRenderer, fileHandler: FileHandler);
     private setupEventListeners;
-    private handleBarAdd;
+    private handleSlotAdd;
     private handleBlockAdd;
-    private updateBarDropdown;
+    private updateSlotDropdown;
     private updateDisplay;
     updateUI(): void;
 }

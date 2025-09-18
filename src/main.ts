@@ -14,13 +14,13 @@ interface NormalizedBlock extends BlockData {
     };
 }
 
-interface BarData {
+interface SlotData {
     id: string;
     label: string;
     blocks: BlockData[];
 }
 
-interface ExportBarData extends BarData {
+interface ExportSlotData extends SlotData {
     blocks: NormalizedBlock[];
 }
 
@@ -31,7 +31,7 @@ interface Metrics {
 }
 
 interface ExportData {
-    bars: ExportBarData[];
+    slots: ExportSlotData[];
     metrics: Metrics;
 }
 
@@ -150,7 +150,7 @@ class Block {
     }
 }
 
-class Bar {
+class Slot {
     public readonly id: string;
     public readonly label: string;
     public readonly blocks: Array<Block>;
@@ -172,7 +172,7 @@ class Bar {
         }
     }
 
-    toJSON(): BarData {
+    toJSON(): SlotData {
         return {
             id: this.id,
             label: this.label,
@@ -183,57 +183,57 @@ class Bar {
 
 // ===== データ管理 =====
 class DataManager {
-    private bars: Bar[];
+    private slots: Slot[];
 
     constructor() {
-        this.bars = [];
+        this.slots = [];
         this.reset();
     }
 
     reset(): void {
-        this.bars = [];
+        this.slots = [];
         this.initializeDefaultData();
     }
 
     private initializeDefaultData(): void {
         // デフォルトデータの作成
-        const bar1 = this.addBar('プロジェクト A');
-        const bar2 = this.addBar('プロジェクト B');
-        const bar3 = this.addBar('プロジェクト C');
+        const slot1 = this.addSlot('プロジェクト A');
+        const slot2 = this.addSlot('プロジェクト B');
+        const slot3 = this.addSlot('プロジェクト C');
 
         try {
             const block1 = new Block('2024-06-01', '2024-06-05', 'フェーズ 1');
             const block2 = new Block('2024-06-03', '2024-06-10', 'フェーズ 2');
             const block3 = new Block('2024-06-15', '2024-06-20', 'フェーズ 3');
 
-            this.assignBlockToBar(block1, bar1.id);
-            this.assignBlockToBar(block2, bar1.id);
-            this.assignBlockToBar(block3, bar2.id);
+            this.assignBlockToSlot(block1, slot1.id);
+            this.assignBlockToSlot(block2, slot1.id);
+            this.assignBlockToSlot(block3, slot2.id);
         } catch (error) {
             Utils.showError(`初期データ作成エラー: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
-    addBar(label: string): Bar {
-        const bar = new Bar(label);
-        this.bars.push(bar);
-        return bar;
+    addSlot(label: string): Slot {
+        const slot = new Slot(label);
+        this.slots.push(slot);
+        return slot;
     }
 
-    findBar(barId: string): Bar | undefined {
-        return this.bars.find(bar => bar.id === barId);
+    findSlot(slotId: string): Slot | undefined {
+        return this.slots.find(slot => slot.id === slotId);
     }
 
     addBlock(begin: string, end: string, label: string): Block {
         return new Block(begin, end, label);
     }
 
-    assignBlockToBar(block: Block, barId: string): string {
-        const bar = this.findBar(barId);
-        if (!bar) {
-            throw new Error(`バーが見つかりません: ${barId}`);
+    assignBlockToSlot(block: Block, slotId: string): string {
+        const slot = this.findSlot(slotId);
+        if (!slot) {
+            throw new Error(`バーが見つかりません: ${slotId}`);
         }
-        bar.addBlock(block);
+        slot.addBlock(block);
         return block.id;
     }
 
@@ -241,8 +241,8 @@ class DataManager {
         let max = -Infinity;
         let min = Infinity;
 
-        this.bars.forEach(bar => {
-            bar.blocks.forEach(block => {
+        this.slots.forEach(slot => {
+            slot.blocks.forEach(block => {
                 max = Math.max(max, block.end);
                 min = Math.min(min, block.begin);
             });
@@ -259,9 +259,9 @@ class DataManager {
         const metrics = this.getMetrics();
 
         return {
-            bars: this.bars.map(bar => ({
-                ...bar.toJSON(),
-                blocks: bar.blocks.map(block => ({
+            slots: this.slots.map(slot => ({
+                ...slot.toJSON(),
+                blocks: slot.blocks.map(block => ({
                     ...block.toJSON(),
                     normalized: {
                         begin: (block.begin - metrics.min) / metrics.range,
@@ -278,29 +278,29 @@ class DataManager {
         try {
             const data: ExportData = typeof strData === 'string' ? jsyaml.load(strData) : strData;
 
-            this.bars = [];
+            this.slots = [];
 
-            data.bars.forEach(barData => {
-                const bar = new Bar(barData.label);
+            data.slots.forEach(slotData => {
+                const slot = new Slot(slotData.label);
 
-                barData.blocks.forEach(blockData => {
+                slotData.blocks.forEach(blockData => {
                     const block = new Block(
                         dayjs.unix(blockData.begin).format('YYYY-MM-DD'),
                         dayjs.unix(blockData.end).format('YYYY-MM-DD'),
                         blockData.label
                     );
-                    bar.addBlock(block);
+                    slot.addBlock(block);
                 });
 
-                this.bars.push(bar);
+                this.slots.push(slot);
             });
         } catch (error) {
             throw new Error(`データインポートエラー: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
-    get allBars(): readonly Bar[] {
-        return this.bars;
+    get allSlots(): readonly Slot[] {
+        return this.slots;
     }
 }
 
@@ -372,7 +372,7 @@ class GanttSvgRenderer {
         this.calculateDimensions(data);
         this.drawBackground();
         this.drawGrid(data.metrics);
-        this.drawBars(data.bars, data.metrics);
+        this.drawSlots(data.slots, data.metrics);
         this.addInteractivity();
     }
 
@@ -428,9 +428,9 @@ class GanttSvgRenderer {
     }
 
     private calculateDimensions(data: ExportData): void {
-        const barCount = data.bars.length;
+        const slotCount = data.slots.length;
         const requiredHeight = Math.max(
-            barCount * (Config.CANVAS.BAR_HEIGHT + Config.CANVAS.BAR_MARGIN) + Config.CANVAS.BAR_MARGIN + 100,
+            slotCount * (Config.CANVAS.BAR_HEIGHT + Config.CANVAS.BAR_MARGIN) + Config.CANVAS.BAR_MARGIN + 100,
             500
         );
 
@@ -500,26 +500,26 @@ class GanttSvgRenderer {
         this.mainGroup.appendChild(labelsGroup);
     }
 
-    private drawBars(bars: ExportBarData[], metrics: Metrics): void {
-        const barsGroup = this.createSvgElement('g', {
-            id: 'bars-group'
+    private drawSlots(slots: ExportSlotData[], metrics: Metrics): void {
+        const slotsGroup = this.createSvgElement('g', {
+            id: 'slots-group'
         }) as SVGGElement;
 
         const { MARGIN_LEFT, MARGIN_RIGHT, BAR_HEIGHT, BAR_MARGIN } = Config.CANVAS;
         const svgWidth = 1000;
         const availableWidth = svgWidth - MARGIN_LEFT - MARGIN_RIGHT;
 
-        bars.forEach((bar, barIndex) => {
-            const y = barIndex * (BAR_HEIGHT + BAR_MARGIN) + BAR_MARGIN;
+        slots.forEach((slot, slotIndex) => {
+            const y = slotIndex * (BAR_HEIGHT + BAR_MARGIN) + BAR_MARGIN;
 
             // バーグループを作成
-            const barGroup = this.createSvgElement('g', {
-                id: `bar-${bar.id}`,
-                class: 'bar-group'
+            const slotGroup = this.createSvgElement('g', {
+                id: `slot-${slot.id}`,
+                class: 'slot-group'
             }) as SVGGElement;
 
             // バーラベル
-            const barLabel = this.createSvgElement('text', {
+            const slotLabel = this.createSvgElement('text', {
                 x: '10',
                 y: y + BAR_HEIGHT / 2,
                 'font-family': 'Arial, sans-serif',
@@ -528,19 +528,19 @@ class GanttSvgRenderer {
                 'fill': '#000000',
                 'dominant-baseline': 'middle'
             });
-            barLabel.textContent = bar.label;
-            barGroup.appendChild(barLabel);
+            slotLabel.textContent = slot.label;
+            slotGroup.appendChild(slotLabel);
 
             // ブロックを描画
-            bar.blocks.forEach((block, blockIndex) => {
+            slot.blocks.forEach((block, blockIndex) => {
                 const blockElement = this.drawBlock(block, y, availableWidth, blockIndex);
-                barGroup.appendChild(blockElement);
+                slotGroup.appendChild(blockElement);
             });
 
-            barsGroup.appendChild(barGroup);
+            slotsGroup.appendChild(slotGroup);
         });
 
-        this.mainGroup.appendChild(barsGroup);
+        this.mainGroup.appendChild(slotsGroup);
     }
 
     private drawBlock(block: NormalizedBlock, y: number, availableWidth: number, blockIndex: number): SVGGElement {
@@ -889,56 +889,56 @@ class UIController {
     }
 
     private setupEventListeners(): void {
-        const barRegisterBtn = document.getElementById('bar_register') as HTMLButtonElement;
+        const slotRegisterBtn = document.getElementById('slot_register') as HTMLButtonElement;
         const blockRegisterBtn = document.getElementById('block_register') as HTMLButtonElement;
         const exportBtn = document.getElementById('export_button') as HTMLButtonElement;
 
-        if (!barRegisterBtn || !blockRegisterBtn || !exportBtn) {
+        if (!slotRegisterBtn || !blockRegisterBtn || !exportBtn) {
             throw new Error('必要なボタン要素が見つかりません');
         }
 
-        barRegisterBtn.addEventListener('click', this.handleBarAdd.bind(this));
+        slotRegisterBtn.addEventListener('click', this.handleSlotAdd.bind(this));
         blockRegisterBtn.addEventListener('click', this.handleBlockAdd.bind(this));
         exportBtn.addEventListener('click', () => this.fileHandler.exportData());
     }
 
-    private handleBarAdd(): void {
-        const barLabelInput = document.getElementById('bar_label') as HTMLInputElement;
-        if (!barLabelInput) {
+    private handleSlotAdd(): void {
+        const slotLabelInput = document.getElementById('slot_label') as HTMLInputElement;
+        if (!slotLabelInput) {
             Utils.showError('バーラベル入力欄が見つかりません');
             return;
         }
 
-        const label = barLabelInput.value.trim();
+        const label = slotLabelInput.value.trim();
 
         if (!label) {
             Utils.showError('バー名を入力してください');
             return;
         }
 
-        this.dataManager.addBar(label);
-        this.updateBarDropdown(label);
+        this.dataManager.addSlot(label);
+        this.updateSlotDropdown(label);
         this.updateDisplay();
-        barLabelInput.value = '';
+        slotLabelInput.value = '';
     }
 
     private handleBlockAdd(): void {
-        const blockBarSelect = document.getElementById('block_bar') as HTMLSelectElement;
+        const blockSlotSelect = document.getElementById('block_slot') as HTMLSelectElement;
         const blockLabelInput = document.getElementById('block_label') as HTMLInputElement;
         const blockBeginInput = document.getElementById('block_begin') as HTMLInputElement;
         const blockEndInput = document.getElementById('block_end') as HTMLInputElement;
 
-        if (!blockBarSelect || !blockLabelInput || !blockBeginInput || !blockEndInput) {
+        if (!blockSlotSelect || !blockLabelInput || !blockBeginInput || !blockEndInput) {
             Utils.showError('必要な入力要素が見つかりません');
             return;
         }
 
-        const barId = blockBarSelect.value;
+        const slotId = blockSlotSelect.value;
         const label = blockLabelInput.value.trim();
         const begin = blockBeginInput.value;
         const end = blockEndInput.value;
 
-        if (!barId) {
+        if (!slotId) {
             Utils.showError('バーを選択してください');
             return;
         }
@@ -953,7 +953,7 @@ class UIController {
 
         try {
             const block = this.dataManager.addBlock(begin, end, label);
-            this.dataManager.assignBlockToBar(block, barId);
+            this.dataManager.assignBlockToSlot(block, slotId);
             this.updateDisplay();
 
             // フォームをクリア
@@ -965,8 +965,8 @@ class UIController {
         }
     }
 
-    private updateBarDropdown(selectedLabel?: string): void {
-        const dropdown = document.getElementById('block_bar') as HTMLSelectElement;
+    private updateSlotDropdown(selectedLabel?: string): void {
+        const dropdown = document.getElementById('block_slot') as HTMLSelectElement;
         if (!dropdown) {
             Utils.showError('バー選択ドロップダウンが見つかりません');
             return;
@@ -974,17 +974,17 @@ class UIController {
 
         dropdown.innerHTML = '<option value="">バーを選択</option>';
 
-        this.dataManager.allBars.forEach(bar => {
+        this.dataManager.allSlots.forEach(slot => {
             const option = document.createElement('option');
-            option.value = bar.id;
-            option.textContent = bar.label;
+            option.value = slot.id;
+            option.textContent = slot.label;
             dropdown.appendChild(option);
         });
 
         if (selectedLabel) {
-            const targetBar = this.dataManager.allBars.find(bar => bar.label === selectedLabel);
-            if (targetBar) {
-                dropdown.value = targetBar.id;
+            const targetSlot = this.dataManager.allSlots.find(slot => slot.label === selectedLabel);
+            if (targetSlot) {
+                dropdown.value = targetSlot.id;
             }
         }
     }
@@ -1000,7 +1000,7 @@ class UIController {
     }
 
     updateUI(): void {
-        this.updateBarDropdown();
+        this.updateSlotDropdown();
         this.updateDisplay();
     }
 }
