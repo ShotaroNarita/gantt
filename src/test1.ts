@@ -51,20 +51,6 @@ const eventPlanningGantt: Gantt = {
     title: "年次カンファレンス2024",
     slots: [
         {
-            title: "会場・設備",
-            color: "#rgba(255, 200, 200)",
-            events: [
-                {
-                    title: "会場予約",
-                    range: { begin: "2024", end: "2025" },
-                },
-                {
-                    title: "機材レンタル手配",
-                    range: { begin: "2024/05/15", end: "2024/05/20" }
-                }
-            ]
-        },
-        {
             title: "コンテンツ",
             events: [
                 {
@@ -75,6 +61,20 @@ const eventPlanningGantt: Gantt = {
                 {
                     title: "プログラム作成",
                     range: { begin: "2024/05/01", end: "2024/05/31" }
+                }
+            ]
+        },
+        {
+            title: "会場・設備",
+            color: "#rgba(255, 200, 200)",
+            events: [
+                {
+                    title: "会場予約",
+                    range: { begin: "2024", end: "2025" },
+                },
+                {
+                    title: "機材レンタル手配",
+                    range: { begin: "2024/03/15", end: "2024/10/20" }
                 }
             ]
         },
