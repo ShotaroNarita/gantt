@@ -52,10 +52,11 @@ const eventPlanningGantt: Gantt = {
     slots: [
         {
             title: "会場・設備",
+            color: "#rgba(255, 200, 200)",
             events: [
                 {
                     title: "会場予約",
-                    range: { begin: "2024-03-01", end: "2024-03-05" }
+                    range: { begin: "2024-03-01", end: "2024-03-05" },
                 },
                 {
                     title: "機材レンタル手配",
@@ -68,7 +69,8 @@ const eventPlanningGantt: Gantt = {
             events: [
                 {
                     title: "講演者依頼",
-                    range: { begin: "2024-03-10", end: "2024-04-30" }
+                    range: { begin: "2024-03-10", end: "2024-04-30" },
+                    color: "purple"
                 },
                 {
                     title: "プログラム作成",
@@ -143,9 +145,9 @@ if (resultElement) {
     resultElement.value = generateGanttSvg(convert(softwareDevelopmentGantt));
 }
 
-// const svg_str = generateGanttSvg(convert(eventPlanningGantt));
+const svg_str = generateGanttSvg(convert(eventPlanningGantt));
 // const svg_str = generateGanttSvg(convert(softwareDevelopmentGantt));
-const svg_str = generateGanttSvg(convert(manufacturingGantt));
+// const svg_str = generateGanttSvg(convert(manufacturingGantt));
 const svgContainer = document.getElementById("svg_result");
 if (svgContainer) {
     svgContainer.innerHTML = svg_str;

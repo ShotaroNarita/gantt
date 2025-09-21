@@ -18,11 +18,13 @@ interface Gantt {
 interface Slot {
     title: string
     events: Event[];
+    color?: string
 }
 
 interface Event {
     title: string
     range: RangeInput
+    color?: string
 }
 
 interface GanttRender {
@@ -35,11 +37,13 @@ interface SlotRender {
     title: string
     events: EventRender[];
     range: RangeUnixtime
+    color?: string
 }
 
 interface EventRender {
     title: string
     range: RangeUnixtime
+    color?: string
 }
 
 // convert Event -> EventRender
@@ -69,7 +73,7 @@ function convert(gantt: Gantt): GanttRender {
             let er = {} as EventRender;
             er.title = event.title;
             er.range = { begin: b, end: e };
-            sr.events.push(er);
+            sr.events.push({...event, ...er} as EventRender);
         }
 
         sr.range = { begin: local_begin, end: local_end };
@@ -152,7 +156,8 @@ function generateEventBar(event: EventRender, y: number, range: RangeUnixtime, c
     const x = config.margin.left + timeToX(event.range.begin, range, chartWidth);
     const width = timeToX(event.range.end, range, chartWidth) - timeToX(event.range.begin, range, chartWidth);
     const barHeight = config.slotHeight - 10;
-    const color = config.colors[colorIndex % config.colors.length];
+
+    const color = event.color ? event.color : config.colors[colorIndex % config.colors.length];
 
     let eventSvg = '';
 
@@ -190,6 +195,10 @@ function generateSlot(slot: SlotRender, slotIndex: number, range: RangeUnixtime,
 
     // スロットのタイトル
     slotSvg += `<text x="${config.margin.left - 10}" y="${y + config.slotHeight / 2 + 4}" text-anchor="end" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">${slot.title}</text>`;
+
+    // 背景
+    const slotColor = slot.color ? slot.color : '#a0a0a0';
+    slotSvg += `<rect x="${config.margin.left}" y="${y}" width="${config.width - config.margin.left - config.margin.right}" height="${config.slotHeight}" fill="${slotColor}" opacity="0.3" rx="3"/>`;
 
     // スロットの背景線
     const chartWidth = config.width - config.margin.left - config.margin.right;
