@@ -145,9 +145,9 @@ if (resultElement) {
     resultElement.value = generateGanttSvg(convert(softwareDevelopmentGantt));
 }
 
-const svg_str = generateGanttSvg(convert(eventPlanningGantt));
+// const svg_str = generateGanttSvg(convert(eventPlanningGantt));
 // const svg_str = generateGanttSvg(convert(softwareDevelopmentGantt));
-// const svg_str = generateGanttSvg(convert(manufacturingGantt));
+const svg_str = generateGanttSvg(convert(manufacturingGantt));
 const svgContainer = document.getElementById("svg_result");
 if (svgContainer) {
     svgContainer.innerHTML = svg_str;

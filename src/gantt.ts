@@ -129,10 +129,13 @@ function generateTimeAxis(range: RangeUnixtime, config: SvgConfig): string {
     // 時間軸の線
     let axis = `<line x1="${config.margin.left}" y1="${axisY}" x2="${config.margin.left + chartWidth}" y2="${axisY}" stroke="#333" stroke-width="1"/>`;
 
+    // TODO: 目盛りの間隔を自動調整する
     // 時間ラベルを生成（開始、中間、終了）
     const timestamps = [
         range.begin,
+        range.begin + (range.end - range.begin) / 4,
         range.begin + (range.end - range.begin) / 2,
+        range.begin + (range.end - range.begin) / 4 * 3,
         range.end
     ];
 
@@ -219,6 +222,10 @@ function generateSvgHeader(config: SvgConfig): string {
     return `<svg width="${config.width}" height="${config.height}" xmlns="http://www.w3.org/2000/svg">`;
 }
 
+function generateSvgFooter(): string {
+    return `</svg>`;
+}
+
 /**
  * タイトルを生成する関数
  */
@@ -256,7 +263,7 @@ export function generateGanttSvg(gantt: GanttRender, customConfig?: Partial<SvgC
         svg += generateSlot(slot, index, gantt.range, config);
     });
 
-    svg += '</svg>';
+    svg += generateSvgFooter();
 
     return svg;
 }
