@@ -9,11 +9,11 @@ const softwareDevelopmentGantt: Gantt = {
             events: [
                 {
                     title: "要件定義",
-                    range: { begin: "2024-01-15", end: "2024-01-31" }
+                    range: { begin: "2024/01/15", end: "2024/01/31" }
                 },
                 {
                     title: "UI/UX設計",
-                    range: { begin: "2024-02-01", end: "2024-02-14" }
+                    range: { begin: "2024/02/01", end: "2024/02/14" }
                 }
             ]
         },
@@ -22,11 +22,11 @@ const softwareDevelopmentGantt: Gantt = {
             events: [
                 {
                     title: "フロントエンド開発",
-                    range: { begin: "2024-02-15", end: "2024-03-31" }
+                    range: { begin: "2024/02/15", end: "2024/03/31" }
                 },
                 {
                     title: "バックエンド開発",
-                    range: { begin: "2024-02-20", end: "2024-04-05" }
+                    range: { begin: "2024/02/20", end: "2024/04/05" }
                 }
             ]
         },
@@ -35,11 +35,11 @@ const softwareDevelopmentGantt: Gantt = {
             events: [
                 {
                     title: "統合テスト",
-                    range: { begin: "2024-04-01", end: "2024-04-15" }
+                    range: { begin: "2024/04/01", end: "2024/04/15" }
                 },
                 {
                     title: "本番環境デプロイ",
-                    range: { begin: "2024-04-16", end: "2024-04-18" }
+                    range: { begin: "2024/04/16", end: "2024/04/18" }
                 }
             ]
         }
@@ -56,11 +56,11 @@ const eventPlanningGantt: Gantt = {
             events: [
                 {
                     title: "会場予約",
-                    range: { begin: "2024-03-01", end: "2024-03-05" },
+                    range: { begin: "2024", end: "2025" },
                 },
                 {
                     title: "機材レンタル手配",
-                    range: { begin: "2024-05-15", end: "2024-05-20" }
+                    range: { begin: "2024/05/15", end: "2024/05/20" }
                 }
             ]
         },
@@ -69,12 +69,12 @@ const eventPlanningGantt: Gantt = {
             events: [
                 {
                     title: "講演者依頼",
-                    range: { begin: "2024-03-10", end: "2024-04-30" },
+                    range: { begin: "2024/03/10", end: "2024/04/30" },
                     color: "purple"
                 },
                 {
                     title: "プログラム作成",
-                    range: { begin: "2024-05-01", end: "2024-05-31" }
+                    range: { begin: "2024/05/01", end: "2024/05/31" }
                 }
             ]
         },
@@ -83,11 +83,11 @@ const eventPlanningGantt: Gantt = {
             events: [
                 {
                     title: "参加者募集",
-                    range: { begin: "2024-06-01", end: "2024-07-15" }
+                    range: { begin: "2024/06/01", end: "2024/07/15" }
                 },
                 {
                     title: "当日運営準備",
-                    range: { begin: "2024-07-20", end: "2024-08-01" }
+                    range: { begin: "2024/07/20", end: "2024/08/01" }
                 }
             ]
         }
@@ -103,11 +103,11 @@ const manufacturingGantt: Gantt = {
             events: [
                 {
                     title: "素材発注",
-                    range: { begin: "2024-02-01", end: "2024-02-03" }
+                    range: { begin: "2024/02/01", end: "2024/02/03" }
                 },
                 {
                     title: "原材料入荷",
-                    range: { begin: "2024-02-15", end: "2024-02-20" }
+                    range: { begin: "2024/02/15", end: "2024/02/20" }
                 }
             ]
         },
@@ -116,11 +116,11 @@ const manufacturingGantt: Gantt = {
             events: [
                 {
                     title: "部品加工",
-                    range: { begin: "2024-02-21", end: "2024-03-15" }
+                    range: { begin: "2024/02/21", end: "2024/03/15" }
                 },
                 {
                     title: "組み立て作業",
-                    range: { begin: "2024-03-16", end: "2024-03-31" }
+                    range: { begin: "2024/03/16", end: "2024/03/31" }
                 }
             ]
         },
@@ -129,11 +129,11 @@ const manufacturingGantt: Gantt = {
             events: [
                 {
                     title: "品質検査",
-                    range: { begin: "2024-03-25", end: "2024-04-05" }
+                    range: { begin: "2024/03/25", end: "2024/04/05" }
                 },
                 {
                     title: "梱包・出荷",
-                    range: { begin: "2024-04-06", end: "2024-04-10" }
+                    range: { begin: "2024/04/06", end: "2024/04/10" }
                 }
             ]
         }
