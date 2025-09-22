@@ -73,7 +73,7 @@ function convert(gantt: Gantt): GanttRender {
             let er = {} as EventRender;
             er.title = event.title;
             er.range = { begin: b, end: e };
-            sr.events.push({...event, ...er} as EventRender);
+            sr.events.push({ ...event, ...er } as EventRender);
         }
 
         sr.range = { begin: local_begin, end: local_end };
@@ -98,6 +98,9 @@ interface SvgConfig {
     margin: { top: number; right: number; bottom: number; left: number };
     slotHeight: number;
     titleHeight: number;
+    customRange?: RangeUnixtime;
+    timeAxisSteps: number;
+    timeAxisFormat: "YYYY/MM/DD" | "YYYY/MM" | "YYYY";
     colors: string[];
 }
 
@@ -107,8 +110,12 @@ const defaultConfig: SvgConfig = {
     margin: { top: 60, right: 40, bottom: 40, left: 150 },
     slotHeight: 40,
     titleHeight: 30,
+    timeAxisSteps: 4,
+    timeAxisFormat: "YYYY/MM/DD",
     colors: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e', '#e67e22']
 };
+
+export { SvgConfig };
 
 /**
  * 時間範囲をピクセル座標に変換する関数
@@ -129,20 +136,21 @@ function generateTimeAxis(range: RangeUnixtime, config: SvgConfig): string {
     // 時間軸の線
     let axis = `<line x1="${config.margin.left}" y1="${axisY}" x2="${config.margin.left + chartWidth}" y2="${axisY}" stroke="#333" stroke-width="1"/>`;
 
-    // TODO: 目盛りの間隔を自動調整する
+
+    const _range = config.customRange ? config.customRange : range;
+
     // 時間ラベルを生成（開始、中間、終了）
-    const timestamps = [
-        range.begin,
-        range.begin + (range.end - range.begin) / 4,
-        range.begin + (range.end - range.begin) / 2,
-        range.begin + (range.end - range.begin) / 4 * 3,
-        range.end
-    ];
+    let timestamps = [];
+
+    for (let i = 0; i < config.timeAxisSteps + 1; i++) {
+        const t = _range.begin + i * (_range.end - _range.begin) / config.timeAxisSteps;
+        timestamps.push(Math.floor(t));
+    }
 
     timestamps.forEach(timestamp => {
-        const x = config.margin.left + timeToX(timestamp, range, chartWidth);
+        const x = config.margin.left + timeToX(timestamp, _range, chartWidth);
         const date = dayjs(timestamp * 1000);
-        const label = date.format('YYYY/MM/DD');
+        const label = date.format(config.timeAxisFormat);
 
         axis += `<line x1="${x}" y1="${axisY - 5}" x2="${x}" y2="${axisY + 5}" stroke="#333" stroke-width="1"/>`;
         axis += `<text x="${x}" y="${axisY - 10}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">${label}</text>`;
@@ -155,9 +163,14 @@ function generateTimeAxis(range: RangeUnixtime, config: SvgConfig): string {
  * イベントバーを描画する関数
  */
 function generateEventBar(event: EventRender, y: number, range: RangeUnixtime, config: SvgConfig, colorIndex: number): string {
+    const _range = config.customRange ? config.customRange : range;
+    if (event.range.end < _range.begin || event.range.begin > _range.end) {
+        // イベントが表示範囲外の場合は描画しない
+        return '';
+    }
     const chartWidth = config.width - config.margin.left - config.margin.right;
-    const x = config.margin.left + timeToX(event.range.begin, range, chartWidth);
-    const width = timeToX(event.range.end, range, chartWidth) - timeToX(event.range.begin, range, chartWidth);
+    const x = config.margin.left + timeToX(event.range.begin, _range, chartWidth);
+    const width = timeToX(event.range.end, _range, chartWidth) - timeToX(event.range.begin, _range, chartWidth);
     const barHeight = config.slotHeight - 10;
 
     const color = event.color ? event.color : config.colors[colorIndex % config.colors.length];
@@ -207,9 +220,11 @@ function generateSlot(slot: SlotRender, slotIndex: number, range: RangeUnixtime,
     const chartWidth = config.width - config.margin.left - config.margin.right;
     slotSvg += `<line x1="${config.margin.left}" y1="${y + config.slotHeight / 2}" x2="${config.margin.left + chartWidth}" y2="${y + config.slotHeight / 2}" stroke="#eee" stroke-width="1"/>`;
 
+    const _range = config.customRange ? config.customRange : range;
+
     // イベントを描画
     slot.events.forEach((event, eventIndex) => {
-        slotSvg += generateEventBar(event, y, range, config, eventIndex);
+        slotSvg += generateEventBar(event, y, _range, config, eventIndex);
     });
 
     return slotSvg;

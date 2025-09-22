@@ -145,9 +145,19 @@ if (resultElement) {
     resultElement.value = generateGanttSvg(convert(softwareDevelopmentGantt));
 }
 
+import { SvgConfig } from "./gantt";
+
+
+let config: Partial<SvgConfig> = {}
+config.width = 1000;
+config.timeAxisFormat = "YYYY/MM";
+config.customRange = {begin: 1705000000, end: 1715000000};
+
+
 // const svg_str = generateGanttSvg(convert(eventPlanningGantt));
 // const svg_str = generateGanttSvg(convert(softwareDevelopmentGantt));
-const svg_str = generateGanttSvg(convert(manufacturingGantt));
+
+const svg_str = generateGanttSvg(convert(manufacturingGantt), config);
 const svgContainer = document.getElementById("svg_result");
 if (svgContainer) {
     svgContainer.innerHTML = svg_str;
