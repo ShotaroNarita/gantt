@@ -151,7 +151,8 @@ import { SvgConfig } from "./gantt";
 let config: Partial<SvgConfig> = {}
 config.width = 1000;
 config.timeAxisFormat = "YYYY/MM";
-config.customRange = {begin: 1705000000, end: 1715000000};
+config.timeAxisSteps = 12;
+config.customRange = {begin: '2024/1/15', end: '2024/5'};
 
 
 // const svg_str = generateGanttSvg(convert(eventPlanningGantt));

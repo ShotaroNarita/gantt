@@ -98,7 +98,7 @@ interface SvgConfig {
     margin: { top: number; right: number; bottom: number; left: number };
     slotHeight: number;
     titleHeight: number;
-    customRange?: RangeUnixtime;
+    customRange?: RangeInput;
     timeAxisSteps: number;
     timeAxisFormat: "YYYY/MM/DD" | "YYYY/MM" | "YYYY";
     colors: string[];
@@ -116,6 +116,18 @@ const defaultConfig: SvgConfig = {
 };
 
 export { SvgConfig };
+
+function parseRangeInput(range: RangeInput): RangeUnixtime {
+    const begin = dayjs(range.begin).unix();
+    const end = dayjs(range.end).unix();
+    if (isNaN(begin) || isNaN(end)) {
+        throw new Error(`Invalid date format in range: ${JSON.stringify(range)}`);
+    }
+    if (begin >= end) {
+        throw new Error(`Range begin must be before end: ${JSON.stringify(range)}`);
+    }
+    return { begin, end };
+}
 
 /**
  * 時間範囲をピクセル座標に変換する関数
@@ -137,7 +149,7 @@ function generateTimeAxis(range: RangeUnixtime, config: SvgConfig): string {
     let axis = `<line x1="${config.margin.left}" y1="${axisY}" x2="${config.margin.left + chartWidth}" y2="${axisY}" stroke="#333" stroke-width="1"/>`;
 
 
-    const _range = config.customRange ? config.customRange : range;
+    const _range = config.customRange ? parseRangeInput(config.customRange) : range;
 
     // 時間ラベルを生成（開始、中間、終了）
     let timestamps = [];
@@ -163,7 +175,7 @@ function generateTimeAxis(range: RangeUnixtime, config: SvgConfig): string {
  * イベントバーを描画する関数
  */
 function generateEventBar(event: EventRender, y: number, range: RangeUnixtime, config: SvgConfig, colorIndex: number): string {
-    const _range = config.customRange ? config.customRange : range;
+    const _range = config.customRange ? parseRangeInput(config.customRange) : range;
     if (event.range.end < _range.begin || event.range.begin > _range.end) {
         // イベントが表示範囲外の場合は描画しない
         return '';
@@ -220,7 +232,7 @@ function generateSlot(slot: SlotRender, slotIndex: number, range: RangeUnixtime,
     const chartWidth = config.width - config.margin.left - config.margin.right;
     slotSvg += `<line x1="${config.margin.left}" y1="${y + config.slotHeight / 2}" x2="${config.margin.left + chartWidth}" y2="${y + config.slotHeight / 2}" stroke="#eee" stroke-width="1"/>`;
 
-    const _range = config.customRange ? config.customRange : range;
+    const _range = config.customRange ? parseRangeInput(config.customRange) : range;
 
     // イベントを描画
     slot.events.forEach((event, eventIndex) => {
