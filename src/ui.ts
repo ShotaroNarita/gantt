@@ -1,13 +1,53 @@
 import { SvgConfig, Gantt, generateGanttSvg, convert } from "./gantt";
 import { load } from 'js-yaml'
 
-let config: Partial<SvgConfig> = {}
-config.width = 1000;
-config.timeAxisFormat = "YYYY/MM";
-config.timeAxisSteps = 12;
-config.customRange = { begin: '2024/1/15', end: '2024/5' };
+let config: Partial<SvgConfig> = {
+    width: 1000,
+    timeAxisFormat: "YYYY/MM",
+    timeAxisSteps: 12,
+    customRange: { begin: '2024/1/15', end: '2024/5' },
+}
 
-let svg_container = document.getElementById("svg_output") as HTMLElement;
+let svg_container: HTMLElement;
+let gantt: Gantt = {
+    title: "Sample Gantt Chart",
+    slots: [
+        {
+            title: "Task 1",
+            events: []
+        }
+    ]
+};
+
+function init() {
+    console.log("init");
+
+    svg_container = document.getElementById("svg_output") as HTMLElement;
+
+    console.log(svg_container);
+
+    render(svg_container, gantt, config);
+
+    document.getElementById("render_button")?.addEventListener("click", () => {
+        render(svg_container, gantt, config);
+    });
+
+    (document.getElementById("config_input") as HTMLInputElement).value = JSON.stringify(config, null, 2);
+
+    document.getElementById("config_input")?.addEventListener("input", (event) => {
+        const input = event.target as HTMLInputElement;
+        console.log(input.value)
+        try {
+            config = JSON.parse(input.value);
+            render(svg_container, gantt, config);
+            // (document.getElementById("config_error") as HTMLElement).innerText = "";
+        } catch (e) {
+            // (document.getElementById("config_error") as HTMLElement).innerText = (e as Error).message;
+        }
+    })
+}
+
+window.onload = () => { init(); }
 
 document.getElementById("file_input_button")?.addEventListener("change", (event) => {
     const input = event.target as HTMLInputElement;
@@ -17,8 +57,7 @@ document.getElementById("file_input_button")?.addEventListener("change", (event)
         reader.onload = function (e) {
             const text = e.target?.result;
             if (typeof text === "string") {
-                const gantt = load(text) as Gantt;
-                // const res = svg_string_from_gantt_string(text);
+                gantt = load(text) as Gantt;
                 render(svg_container, gantt, config);
             }
         };
