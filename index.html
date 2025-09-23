@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>textarea {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: Hiragino Sans, Yu Gothic UI, Meiryo UI, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+</style>
+</head>
+
+<body>
+    <h1>Easy Gantt</h1>
+
+    <input type="file" id="file_input_button" accept=".json,.yaml,.yml,application/json,text/yaml">
+
+    <div>
+        <button id="render_button">render</button>
+
+    </div>
+
+    <div>
+        <textarea id="config_input" cols="40" rows="15"></textarea>
+    </div>
+
+    <div id="svg_output"></div>
+
+    <div id="result"></div>
+
+    <script type="module" src="/gantt.ed7d2054.js"></script>
+
+
+</body></html>
