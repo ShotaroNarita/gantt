@@ -1,3 +1,4 @@
+import { text } from "stream/consumers";
 import { SvgConfig, Gantt, generateGanttSvg, convert } from "./gantt";
 import { load } from 'js-yaml'
 
@@ -20,7 +21,26 @@ let gantt: Gantt = {
 };
 
 function init() {
-    console.log("init");
+    // 特定のtextareaに対して
+    const textarea = document.getElementById('config_input') as HTMLTextAreaElement | null;
+    textarea?.addEventListener('keydown', function (e) {
+        if (e.key === 'Tab') {
+            e.preventDefault(); // Tabキーのデフォルト動作を無効化
+            // カーソル位置を取得
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            // 現在の値を取得
+            const value = textarea.value;
+
+            // タブ文字を挿入
+            textarea.value = value.substring(0, start) + '\t' + value.substring(end);
+
+            // カーソル位置を調整（タブ文字の後に移動）
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }
+    });
 
     svg_container = document.getElementById("svg_output") as HTMLElement;
 
@@ -36,13 +56,10 @@ function init() {
 
     document.getElementById("config_input")?.addEventListener("input", (event) => {
         const input = event.target as HTMLInputElement;
-        console.log(input.value)
         try {
             config = JSON.parse(input.value);
-            render(svg_container, gantt, config);
-            // (document.getElementById("config_error") as HTMLElement).innerText = "";
         } catch (e) {
-            // (document.getElementById("config_error") as HTMLElement).innerText = (e as Error).message;
+            console.log("Invalid JSON in config input: ", (e as Error).message);
         }
     })
 }
